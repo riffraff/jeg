@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+# vim: syntax=ruby ts=2 sts=2 expandtab
+#
+
+require 'json'
+require 'optparse'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: example.rb [options]"
+
+  opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+    options[:verbose] = v
+  end
+  opts.on("-e", "--expression", "json path expr") do |v|
+    options[:expression] = v
+  end
+end.parse!
+
+json = JSON.parse(ARGF)
+p json
+p option
+
+
