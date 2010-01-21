@@ -32,7 +32,11 @@ class Object
 end
 =end
 ARGF.each do |line|
-  json = JSON.parse(line)
-  puts JSONPath.lookup(hash_or_array, options[:expression])
+  begin 
+    json = JSON.parse(line)
+    puts JSONPath.lookup(json, options[:expression])
+  rescue JSON::ParserError
+    STDERR.puts "Something went wrong parsing:\n#{line}"
+  end
 end
 
