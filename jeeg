@@ -2,7 +2,9 @@
 # vim: syntax=ruby ts=2 sts=2 expandtab
 #
 
+require 'rubygems'
 require 'json'
+require 'jsonpath'
 require 'optparse'
 
 options = {}
@@ -12,13 +14,25 @@ OptionParser.new do |opts|
   opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
     options[:verbose] = v
   end
-  opts.on("-e", "--expression", "json path expr") do |v|
+  opts.on("-e", "--expression json.expr", "json path expr") do |v|
     options[:expression] = v
   end
 end.parse!
 
-json = JSON.parse(ARGF)
-p json
-p option
-
+=begin
+class Object
+  def method_missing(sym,*args)
+    if args.empty? && respond_to?("[]")
+      if (respond_to(:key?) && key?(sym)) || is_a?(Array)
+        return self[sym]
+      end
+    end
+    super(sym, *args)
+  end
+end
+=end
+ARGF.each do |line|
+  json = JSON.parse(line)
+  puts JSONPath.lookup(hash_or_array, options[:expression])
+end
 
