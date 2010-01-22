@@ -6,37 +6,97 @@ require 'rubygems'
 require 'json'
 require 'jsonpath'
 require 'optparse'
+ 
+JeegVersion = 0.1
 
 options = {}
 OptionParser.new do |opts|
-  opts.banner = "Usage: example.rb [options]"
+  opts.banner = <<-Eof
+    Usage: jeeg [options] < file"
+
+    #$0 makes JSONPath queries on a JSON stream (line-separated blocks).
+    It is designed for quick & dirty work so it assumes things for you.
+    For example, if a single simple result comes out of the query it will be printed "bare" 
+    while if multiple results are matched they will be presented as json. You can override this with a switch.
+
+    Examples:
+      Select a top level field in top struct
+        {"text":"babble babble"} | #$0 -e $.text => ["babble babble"] 
+      Leading '$' ("top") and '.' ("this object") can be omitted
+        {"text":"babble babble"} | #$0 -e .text => ["babble babble"] 
+        {"text":"babble babble"} | #$0 -e text => ["babble babble"] 
+      Select subfield
+        {"results":[{"text":"foo"},{"text":"bar"}]} #$0 -e results.text => nothing
+        {"results":[{"text":"foo"},{"text":"bar"}]} #$0 -e results..text => ["foo","bar"]
+      Array access
+        {"results":[{"a":"b"},{"a":"d"}]} | #$0 -e results[0] => [{"a":"b"}]
+
+      Select a sub field everywhere, most always you want this
+        {"result":[{"text":"babble babble"}]}' | jeeg -e ..text => ["babble babble"]
+      So you also have a shortcut
+        {"result":[{"text":"babble babble"}]}' | jeeg -a text => ["babble babble"]
+      
+     See JSONPath specs at  http://goessner.net/articles/JsonPath/ .
+
+
+   Eof
 
   opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
     options[:verbose] = v
   end
-  opts.on("-e", "--expression json.expr", "json path expr") do |v|
+  opts.on("-a", "--anywhere <json field name>", "Matches a field anywhere") do |v|
+    options[:expression] = "$.." + v
+  end
+  opts.on("-e", "--expression <jsonpath expression>", <<-Eof.strip ) do |v|
+      Specify a jsonpath expr, leading '$' or '.' are automatically added
+    Eof
+    v = '.'+v if v =~ /^\w/
+    v = "$"+v if v =~ /^\./
     options[:expression] = v
+  end
+  opts.on("-x", "--explain", "Shows what jeeg is doing to your input and what is the actual expression used") do |v|
+    options[:explain] = v
+  end
+  opts.on("-p", "--pretty-print", "Prints the input objects as pretty ruby") do |v|
+    options[:pretty_print] = v
+  end
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+
+  # Another typical switch to print the version.
+  opts.on_tail("--version", "Show version") do
+    puts JeegVersion
+    exit
   end
 end.parse!
 
-=begin
-class Object
-  def method_missing(sym,*args)
-    if args.empty? && respond_to?("[]")
-      if (respond_to(:key?) && key?(sym)) || is_a?(Array)
-        return self[sym]
-      end
-    end
-    super(sym, *args)
+def main(options)
+  if options[:pretty_print]
+    require 'pp'
   end
-end
-=end
-ARGF.each do |line|
-  begin 
-    json = JSON.parse(line)
-    puts JSONPath.lookup(json, options[:expression])
-  rescue JSON::ParserError
-    STDERR.puts "Something went wrong parsing:\n#{line}"
+  if options[:explain]
+    puts "Using path '#{options[:expression]}'"
+  end
+  ARGF.each do |line|
+    begin 
+      json = JSON.parse(line)
+      if options[:verbose]
+        puts line
+        puts json
+      end
+      if options[:pretty_print]
+        pp json
+      end
+      puts JSONPath.lookup(json, options[:expression]).to_json
+    rescue JSON::ParserError=>e
+      STDERR.puts "Something went wrong parsing:\n#{line}"
+      STDERR.puts e.message
+    end
   end
 end
 
+if __FILE__==$0
+  main(options)
+end
