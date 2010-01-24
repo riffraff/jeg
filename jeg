@@ -6,20 +6,24 @@ require 'rubygems'
 require 'json'
 require 'jsonpath'
 require 'optparse'
-#
-# To get rid of the annoying stack trace on ctrl-C:
-trap("INT") { abort }
- 
-JegVersion = 0.2
 
-def mk_expr(v)
+class Jeg
+  Version = 0.2
+
+  attr :options
+  attr :input
+
+  def mk_expr(v)
     v = '.'+v if v =~ /^\w/
-    v = "$"+v if v =~ /^\./
-    v
-end
-options = {:format=>:smart}
-OptionParser.new do |opts|
-  opts.banner = <<-Banner
+      v = "$"+v if v =~ /^\./
+      v
+  end
+
+  def initialize(arguments=ARGV, input=ARGF)
+    @input = input
+    @options = {:format=>:smart}
+    OptionParser.new(arguments) do |opts|
+      opts.banner = <<-Banner
     Usage: jeg [options] [file]"
 
     jeg interprets JSONPath queries on a JSON stream (line-separated blocks).
@@ -56,94 +60,99 @@ OptionParser.new do |opts|
 
       Select all equal fields in an array element
         {"ary":[[{"name":"joe"}, {"name":"jean"}, {"name":"jane"}],[{"name":"wally"}]]} | jeg -e ary[0]..name -f json => ["joe", "jean", "jane"]
-      
-      
+
+
      See JSONPath specs at  http://goessner.net/articles/JsonPath/ .
 
 
-   Banner
+      Banner
 
-  opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
-    options[:verbose] = v
-  end
-  opts.on("-a", "--anywhere FIELD", "Matches a field anywhere") do |v|
-    options[:expression] = "$.." + v
-  end
-  opts.on("-e", "--expression JSONPATHEXPR", <<-Eof.strip ) do |v|
-      Specify a jsonpath expr, leading '$' or '.' are automatically added
-    Eof
-    options[:expression] = mk_expr(v)
-  end
-  opts.on("-x", "--explain", "Show what jeg is doing to your input and what is the actual expression used") do |v|
-    options[:explain] = v
-  end
-  opts.on("-p", "--pretty-print", "Print the input objects as pretty ruby") do |v|
-    options[:pretty_print] = v
-  end
-  opts.on_tail("-f", "--format FORMAT", [:smart, :json, :ruby], "Select output format (smart, json ruby)" ) do |v|
-    options[:format] = v
-  end
-  opts.on_tail("-h", "--help", "Show this message") do
-    puts opts
-    exit
-  end
+      opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+        options[:verbose] = v
+      end
+      opts.on("-a", "--anywhere FIELD", "Matches a field anywhere") do |v|
+        options[:expression] = "$.." + v
+      end
+      opts.on("-e", "--expression JSONPATHEXPR", <<-Eof.strip ) do |v|
+        Specify a jsonpath expr, leading '$' or '.' are automatically added
+        Eof
+        options[:expression] = mk_expr(v)
+      end
+      opts.on("-x", "--explain", "Show what jeg is doing to your input and what is the actual expression used") do |v|
+        options[:explain] = v
+      end
+      opts.on("-p", "--pretty-print", "Print the input objects as pretty ruby") do |v|
+        options[:pretty_print] = v
+      end
+      opts.on_tail("-f", "--format FORMAT", [:smart, :json, :ruby], "Select output format (smart, json ruby)" ) do |v|
+        options[:format] = v
+      end
+      opts.on_tail("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
 
-  # Another typical switch to print the version.
-  opts.on_tail("--version", "Show version") do
-    puts JegVersion
-    exit
-  end
-end.parse!
+      # Another typical switch to print the version.
+      opts.on_tail("--version", "Show version") do
+        puts Version
+        exit
+      end
+    end.parse!
 
-def print_smart(list)
-  list.each do |arg|
-    if arg.is_a?(Array) || arg.is_a?(Hash)
-      puts arg.to_json
-    else
-      puts arg
+    def print_smart(list)
+      list.each do |arg|
+        if arg.is_a?(Array) || arg.is_a?(Hash)
+          puts arg.to_json
+        else
+          puts arg
+        end
+      end
     end
-  end
-end
 
-def main(options)
-  if options[:expression].nil?
-    options[:expression] = mk_expr(ARGV.shift)
-  end
-  if options[:pretty_print]
-    require 'pp'
-  end
-  if options[:explain]
-    puts "Using path '#{options[:expression]}'"
-  end
-  ARGF.each do |line|
-    begin 
-      json = JSON.parse(line)
-      if options[:verbose]
-        puts line
-        puts json
+    def loop
+
+      if options[:expression].nil?
+        options[:expression] = mk_expr(ARGV.shift)
       end
       if options[:pretty_print]
-        pp json
+        require 'pp'
       end
-      res = JSONPath.lookup(json, options[:expression])
-      case options[:format]
-      when :smart
-        print_smart(res)
-      when :json
-        puts res.to_json
-      when :ruby
-        p res
-      else 
-        abort("invalid format")
+      if options[:explain]
+        puts "Using path '#{options[:expression]}'"
       end
+      input.each do |line|
+        begin 
+          json = JSON.parse(line)
+          if options[:verbose]
+            puts line
+            puts json
+          end
+          if options[:pretty_print]
+            pp json
+          end
+          res = JSONPath.lookup(json, options[:expression])
+          case options[:format]
+          when :smart
+            print_smart(res)
+          when :json
+            puts res.to_json
+          when :ruby
+            p res
+          else 
+            abort("invalid format")
+          end
 
-    rescue JSON::ParserError=>e
-      STDERR.puts "Something went wrong parsing:\n#{line}"
-      STDERR.puts e.message
+        rescue JSON::ParserError=>e
+          STDERR.puts "Something went wrong parsing:\n#{line}"
+          STDERR.puts e.message
+        end
+      end
     end
   end
 end
 
 if __FILE__==$0
-  main(options)
+  # To get rid of the annoying stack trace on ctrl-C:
+  trap("INT") { abort }
+  Jeg.new.loop
 end
