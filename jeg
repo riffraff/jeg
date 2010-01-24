@@ -10,7 +10,7 @@ require 'optparse'
 # To get rid of the annoying stack trace on ctrl-C:
 trap("INT") { abort }
  
-JegVersion = 0.1
+JegVersion = 0.2
 
 def mk_expr(v)
     v = '.'+v if v =~ /^\w/
