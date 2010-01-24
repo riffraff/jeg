@@ -17,38 +17,44 @@ def mk_expr(v)
     v = "$"+v if v =~ /^\./
     v
 end
-options = {}
+options = {:format=>:smart}
 OptionParser.new do |opts|
   opts.banner = <<-Banner
-    Usage: jeg [options] < file"
+    Usage: jeg [options] [file]"
 
-    jeg makes JSONPath queries on a JSON stream (line-separated blocks).
+    jeg interprets JSONPath queries on a JSON stream (line-separated blocks).
     It is designed for quick & dirty work so it assumes things for you.
-    For example, if a single simple result comes out of the query it will be printed "bare" 
-    while if multiple results are matched they will be presented as json. You can override this with a switch.
+    The default output (--smart) will print simple strings if the result is a single basic type while if
+    if multiple results are matched or if the single match is structured data it will be presented as json. 
+    Also, by default if the JSONPath expression does not start with $. (top element) it will be added automatically.
+    You can override this with a switch.
 
     Examples:
       Select a top level field in top struct
-        {"text":"babble babble"} | jeg -e $.text => ["babble babble"] 
+        {"text":"babble babble"} | jeg -e $.text => babble babble
+        {"text":"babble babble"} | jeg -e $.text -f json => ["babble babble"]
+        {"text":"babble babble"} | jeg -e $.text -f ruby => ["babble babble"]
+        {"obj":{"key":"value","index":1}} | jeg -e $.obj -f json => [{"key":"value","index":1}]
+        {"obj":{"key":"value","index":1}} | jeg -e $.obj -f ruby => [{"key"=>"value","index"=>1}]
       The -e option is implicit if none is provided
-        {"text":"babble babble"} | jeg $.text => ["babble babble"] 
+        {"text":"babble babble"} | jeg $.text => babble babble 
 
       Leading '$' ("top") and '.' ("this object") can be omitted
-        {"text":"babble babble"} | jeg -e .text => ["babble babble"] 
-        {"text":"babble babble"} | jeg -e text => ["babble babble"] 
+        {"text":"babble babble"} | jeg -e .text => babble babble
+        {"text":"babble babble"} | jeg -e text => babble babble 
       Select subfield
-        {"results":[{"text":"foo"},{"text":"bar"}]} | jeg -e results.text => []
-        {"results":[{"text":"foo"},{"text":"bar"}]} | jeg -e results..text => ["foo","bar"]
+        {"results":[{"text":"foo"},{"text":"bar"}]} | jeg results.text -f json => []
+        {"results":[{"text":"foo"},{"text":"bar"}]} | jeg results..text -f json => ["foo","bar"]
       Array access
-        {"results":[{"a":"b"},{"a":"d"}]} | jeg -e results[0] => [{"a":"b"}]
+        {"results":[{"a":"b"},{"a":"d"}]} | jeg results[0] -f json => [{"a":"b"}]
 
       Select a sub field everywhere, most always you want this
-        {"result":[{"text":"babble babble"}]} | jeg -e ..text => ["babble babble"]
+        {"result":[{"text":"babble babble"}]} | jeg -e ..text => babble babble
       So you also have a shortcut
-        {"result":[{"text":"babble babble"}]} | jeg -a text => ["babble babble"]
+        {"result":[{"text":"babble babble"}]} | jeg -a text => babble babble
 
       Select all equal fields in an array element
-        {"ary":[[{"name":"joe"}, {"name":"jean"}, {"name":"jane"}],[{"name":"wally"}]]} | jeg -e ary[0]..name => ["joe", "jean", "jane"]
+        {"ary":[[{"name":"joe"}, {"name":"jean"}, {"name":"jane"}],[{"name":"wally"}]]} | jeg -e ary[0]..name -f json => ["joe", "jean", "jane"]
       
       
      See JSONPath specs at  http://goessner.net/articles/JsonPath/ .
@@ -59,19 +65,22 @@ OptionParser.new do |opts|
   opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
     options[:verbose] = v
   end
-  opts.on("-a", "--anywhere <json field name>", "Matches a field anywhere") do |v|
+  opts.on("-a", "--anywhere FIELD", "Matches a field anywhere") do |v|
     options[:expression] = "$.." + v
   end
-  opts.on("-e", "--expression <jsonpath expression>", <<-Eof.strip ) do |v|
+  opts.on("-e", "--expression JSONPATHEXPR", <<-Eof.strip ) do |v|
       Specify a jsonpath expr, leading '$' or '.' are automatically added
     Eof
     options[:expression] = mk_expr(v)
   end
-  opts.on("-x", "--explain", "Shows what jeg is doing to your input and what is the actual expression used") do |v|
+  opts.on("-x", "--explain", "Show what jeg is doing to your input and what is the actual expression used") do |v|
     options[:explain] = v
   end
-  opts.on("-p", "--pretty-print", "Prints the input objects as pretty ruby") do |v|
+  opts.on("-p", "--pretty-print", "Print the input objects as pretty ruby") do |v|
     options[:pretty_print] = v
+  end
+  opts.on_tail("-f", "--format FORMAT", [:smart, :json, :ruby], "Select output format (smart, json ruby)" ) do |v|
+    options[:format] = v
   end
   opts.on_tail("-h", "--help", "Show this message") do
     puts opts
@@ -85,8 +94,18 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+def print_smart(list)
+  list.each do |arg|
+    if arg.is_a?(Array) || arg.is_a?(Hash)
+      puts arg.to_json
+    else
+      puts arg
+    end
+  end
+end
+
 def main(options)
-  if options.empty?
+  if options[:expression].nil?
     options[:expression] = mk_expr(ARGV.shift)
   end
   if options[:pretty_print]
@@ -105,7 +124,18 @@ def main(options)
       if options[:pretty_print]
         pp json
       end
-      puts JSONPath.lookup(json, options[:expression]).to_json
+      res = JSONPath.lookup(json, options[:expression])
+      case options[:format]
+      when :smart
+        print_smart(res)
+      when :json
+        puts res.to_json
+      when :ruby
+        p res
+      else 
+        abort("invalid format")
+      end
+
     rescue JSON::ParserError=>e
       STDERR.puts "Something went wrong parsing:\n#{line}"
       STDERR.puts e.message
