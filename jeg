@@ -24,8 +24,8 @@ OptionParser.new do |opts|
 
     jeg interprets JSONPath queries on a JSON stream (line-separated blocks).
     It is designed for quick & dirty work so it assumes things for you.
-    The default output (--smart) will print simple strings if the result is a single basic type while if
-    if multiple results are matched or if the single match is structured data it will be presented as json. 
+    The default output (--smart) will print simple strings if the result is a single basic type, one per line
+    (grep style) while if the match is structured data it will be presented as json. 
     Also, by default if the JSONPath expression does not start with $. (top element) it will be added automatically.
     You can override this with a switch.
 
@@ -34,6 +34,7 @@ OptionParser.new do |opts|
         {"text":"babble babble"} | jeg -e $.text => babble babble
         {"text":"babble babble"} | jeg -e $.text -f json => ["babble babble"]
         {"text":"babble babble"} | jeg -e $.text -f ruby => ["babble babble"]
+        {"obj":{"key":"value","index":1}} | jeg -e $.obj -f smart => {"index":1,"key":"value"}
         {"obj":{"key":"value","index":1}} | jeg -e $.obj -f json => [{"key":"value","index":1}]
         {"obj":{"key":"value","index":1}} | jeg -e $.obj -f ruby => [{"key"=>"value","index"=>1}]
       The -e option is implicit if none is provided
