@@ -6,40 +6,47 @@ require 'rubygems'
 require 'json'
 require 'jsonpath'
 require 'optparse'
+#
+# To get rid of the annoying stack trace on ctrl-C:
+trap("INT") { abort }
  
-JeegVersion = 0.1
+JegVersion = 0.1
 
 options = {}
 OptionParser.new do |opts|
-  opts.banner = <<-Eof
-    Usage: jeeg [options] < file"
+  opts.banner = <<-Banner
+    Usage: jeg [options] < file"
 
-    #$0 makes JSONPath queries on a JSON stream (line-separated blocks).
+    jeg makes JSONPath queries on a JSON stream (line-separated blocks).
     It is designed for quick & dirty work so it assumes things for you.
     For example, if a single simple result comes out of the query it will be printed "bare" 
     while if multiple results are matched they will be presented as json. You can override this with a switch.
 
     Examples:
       Select a top level field in top struct
-        {"text":"babble babble"} | #$0 -e $.text => ["babble babble"] 
+        {"text":"babble babble"} | jeg -e $.text => ["babble babble"] 
       Leading '$' ("top") and '.' ("this object") can be omitted
-        {"text":"babble babble"} | #$0 -e .text => ["babble babble"] 
-        {"text":"babble babble"} | #$0 -e text => ["babble babble"] 
+        {"text":"babble babble"} | jeg -e .text => ["babble babble"] 
+        {"text":"babble babble"} | jeg -e text => ["babble babble"] 
       Select subfield
-        {"results":[{"text":"foo"},{"text":"bar"}]} #$0 -e results.text => nothing
-        {"results":[{"text":"foo"},{"text":"bar"}]} #$0 -e results..text => ["foo","bar"]
+        {"results":[{"text":"foo"},{"text":"bar"}]} | jeg -e results.text => []
+        {"results":[{"text":"foo"},{"text":"bar"}]} | jeg -e results..text => ["foo","bar"]
       Array access
-        {"results":[{"a":"b"},{"a":"d"}]} | #$0 -e results[0] => [{"a":"b"}]
+        {"results":[{"a":"b"},{"a":"d"}]} | jeg -e results[0] => [{"a":"b"}]
 
       Select a sub field everywhere, most always you want this
-        {"result":[{"text":"babble babble"}]}' | jeeg -e ..text => ["babble babble"]
+        {"result":[{"text":"babble babble"}]} | jeg -e ..text => ["babble babble"]
       So you also have a shortcut
-        {"result":[{"text":"babble babble"}]}' | jeeg -a text => ["babble babble"]
+        {"result":[{"text":"babble babble"}]} | jeg -a text => ["babble babble"]
+
+      Select all equal fields in an array element
+        {"ary":[[{"name":"joe"}, {"name":"jean"}, {"name":"jane"}],[{"name":"wally"}]]} | jeg -e ary[0]..name => ["joe", "jean", "jane"]
+      
       
      See JSONPath specs at  http://goessner.net/articles/JsonPath/ .
 
 
-   Eof
+   Banner
 
   opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
     options[:verbose] = v
@@ -54,7 +61,7 @@ OptionParser.new do |opts|
     v = "$"+v if v =~ /^\./
     options[:expression] = v
   end
-  opts.on("-x", "--explain", "Shows what jeeg is doing to your input and what is the actual expression used") do |v|
+  opts.on("-x", "--explain", "Shows what jeg is doing to your input and what is the actual expression used") do |v|
     options[:explain] = v
   end
   opts.on("-p", "--pretty-print", "Prints the input objects as pretty ruby") do |v|
@@ -67,7 +74,7 @@ OptionParser.new do |opts|
 
   # Another typical switch to print the version.
   opts.on_tail("--version", "Show version") do
-    puts JeegVersion
+    puts JegVersion
     exit
   end
 end.parse!
