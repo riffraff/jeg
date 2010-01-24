@@ -12,6 +12,11 @@ trap("INT") { abort }
  
 JegVersion = 0.1
 
+def mk_expr(v)
+    v = '.'+v if v =~ /^\w/
+    v = "$"+v if v =~ /^\./
+    v
+end
 options = {}
 OptionParser.new do |opts|
   opts.banner = <<-Banner
@@ -25,6 +30,9 @@ OptionParser.new do |opts|
     Examples:
       Select a top level field in top struct
         {"text":"babble babble"} | jeg -e $.text => ["babble babble"] 
+      The -e option is implicit if none is provided
+        {"text":"babble babble"} | jeg $.text => ["babble babble"] 
+
       Leading '$' ("top") and '.' ("this object") can be omitted
         {"text":"babble babble"} | jeg -e .text => ["babble babble"] 
         {"text":"babble babble"} | jeg -e text => ["babble babble"] 
@@ -57,9 +65,7 @@ OptionParser.new do |opts|
   opts.on("-e", "--expression <jsonpath expression>", <<-Eof.strip ) do |v|
       Specify a jsonpath expr, leading '$' or '.' are automatically added
     Eof
-    v = '.'+v if v =~ /^\w/
-    v = "$"+v if v =~ /^\./
-    options[:expression] = v
+    options[:expression] = mk_expr(v)
   end
   opts.on("-x", "--explain", "Shows what jeg is doing to your input and what is the actual expression used") do |v|
     options[:explain] = v
@@ -80,6 +86,9 @@ OptionParser.new do |opts|
 end.parse!
 
 def main(options)
+  if options.empty?
+    options[:expression] = mk_expr(ARGV.shift)
+  end
   if options[:pretty_print]
     require 'pp'
   end
