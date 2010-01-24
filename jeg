@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env ruby -w
 # vim: syntax=ruby ts=2 sts=2 expandtab
 #
 
