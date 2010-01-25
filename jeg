@@ -15,8 +15,8 @@ class Jeg
 
   def mk_expr(v)
     v = '.'+v if v =~ /^\w/
-      v = "$"+v if v =~ /^\./
-      v
+    v = "$"+v if v =~ /^\./
+    v
   end
 
   def initialize(arguments=ARGV, input=ARGF)
