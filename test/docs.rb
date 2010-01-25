@@ -1,10 +1,12 @@
 require 'test/unit'
 require 'rubygems'
 require 'json'
+abort("jeg is not in path") if %x{jeg -h}.empty?
+
 class T < Test::Unit::TestCase
-  def test_samples
-    examples = File.readlines('jeg').grep(/jeg .*=>/)
-    examples.each do |line|
+  examples = File.readlines('jeg').grep(/jeg .*=>/)
+  examples.each_with_index do |line,idx|
+    define_method("test_#{idx}")  do
       #p line
       cmd, exp = line.scan(%r-(.*?)=>(.*)-)[0] 
       json, pipe = cmd.split('|')
