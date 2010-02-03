@@ -47,14 +47,21 @@ Well, a bit more, see `jeg -h`
 Installation
 ------------
 
-Installation assumes you installed the json and jsonpath gems. 
-I may end up writing a gemspec, it's in the todo list. 
-Anyway, just dump the single `jeg` script in some directory in your path and make it executable.
+Jeg depends on the riffraff_jsonpath and json libraries.
+The former is a small fork of the original jsonpath gem without warnings and with a couple of tiny fixes.
+
+You can  just dump the single `jeg` script in some directory in your path and make it executable to install it, 
+or you can user rubygems
+    
+    gem install jeg
+
+And that's it. 
 
 Running the tests
 -----------------
 As of now no unit tests were written but the command line examples are extracted and executed by
-the code in `test/` just run them with ruby having the script in your patgh, you shall see something like
+the code in `test/` (if you have a checkout and you are reading this file) just run them with 
+ruby having the script in your path, or use `rake test` you shall see something like
 
     Loaded suite test/docs
     Started
