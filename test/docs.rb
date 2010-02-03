@@ -4,7 +4,8 @@ require 'json'
 abort("jeg is not in path") if %x{jeg -h}.empty?
 
 class T < Test::Unit::TestCase
-  examples = File.readlines('jeg').grep(/jeg .*=>/)
+  jeg_file=%x(which jeg).chomp
+  examples = File.readlines(jeg_file).grep(/jeg .*=>/)
   examples.each_with_index do |line,idx|
     define_method("test_#{idx}")  do
       #p line

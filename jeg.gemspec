@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
      "README.mkd",
      "Rakefile",
      "VERSION",
-     "jeg",
+     "bin/jeg",
      "jeg.gemspec",
      "test/docs.rb"
   ]
