@@ -1,0 +1,73 @@
+jeg, a json grep
+===========
+
+Jeg was born from the repeated annoyance of trying to quickly glance at
+some JSON-fomatted data and being unable to really get it, then have to
+pass it through a javascript formatter and then later go and trying to
+find the data that I alread know was under the "name" field but was
+impossible to discern in a 800 character single line string.
+
+Ah, how I craved for the simplicty of tabular data that I could slice
+and dice with grep and cut.
+
+Thus, Jeg was born.
+
+So what is it, concretely?
+--------------------------
+
+Simply put, it allows you to select parts of a json structure using
+JSONPath. For example, if you want to find a user's real name on twitter  from
+this
+
+    {"url":"http://www.riffraff.info","description":"Code Monkey, Professional Student, Geek","time_zone":"Rome","profile_sidebar_fill_color":"e0ff92","status":{"in_reply_to_user_id":null,"in_reply_to_status_id":null,"in_reply_to_screen_name":null,"created_at":"Sun Jan 24 16:16:28 +0000 2010","source":"<a href=\"http://www.tweetdeck.com/\" rel=\"nofollow\">TweetDeck</a>","truncated":false,"id":8153979023,"favorited":false,"text":"darn I have to publish a forked gem, and can't understand the state of the art in how to do so :("},"statuses_count":447,"created_at":"Tue Jan 02 11:27:37 +0000 2007","profile_sidebar_border_color":"87bc44","contributors_enabled":false,"favourites_count":3,"followers_count":142,"profile_image_url":"http://a3.twimg.com/profile_images/88180929/nyussi_normal.jpg","profile_text_color":"000000","lang":"en","geo_enabled":true,"notifications":null,"profile_background_image_url":"http://s.twimg.com/a/1264119427/images/themes/theme1/bg.png","friends_count":171,"protected":false,"screen_name":"riffraff","following":null,"profile_link_color":"0000ff","location":"milan/rome/budapest","name":"gabriele renzi","verified":false,"profile_background_tile":false,"id":446303,"utc_offset":3600,"profile_background_color":"9ae4e8"
+
+
+you can simply query the api via curl and use jeg to extract the name
+field:
+    
+    $ curl  http://twitter.com/users/show.json?screen_name=riffraff -s | jeg name
+      gabriele renzi
+
+Or if you want the 'text' fields in a list of objects from the Cascaad
+APIs
+
+    $ curl api.cascaad.com/2/messages/latest.json?type=NEWS -s  | jeg $..text
+      counter the Tea Party movement, which is abt stopping things, with Innovation Movement, which is abt starting things.  http://bit.ly/4o35m4
+      Bringing Silicon Valley to Sacramento: Why Entrepreneurs Need to Help Rebuild California's IT Systems http://tcrn.ch/8pD3Ki by @vwadhwa
+      Spectacular Thomas Friedman OpEd on making 2010 the Year of Innovation and Start-Up America  - http://nyti.ms/4qk8Jh
+
+
+
+Just this?
+----------
+
+Well, a bit more, see `jeg -h`
+
+
+Installation
+------------
+
+Installation assumes you installed the json and jsonpath gems. 
+I may end up writing a gemspec, it's in the todo list. 
+Anyway, just dump the single `jeg` script in some directory in your path and make it executable.
+
+Running the tests
+-----------------
+As of now no unit tests were written but the command line examples are extracted and executed by
+the code in `test/` just run them with ruby having the script in your patgh, you shall see something like
+
+    Loaded suite test/docs
+    Started
+    ...............
+    Finished in 9.999814 seconds.
+
+    15 tests, 15 assertions, 0 failures, 0 errors
+
+If you don't please report it at http://github.com/riffraff/jeg/issues
+
+License
+-------
+
+jeg is free software (pretend you wrote it, sell it for huge profit) but see
+accompanying LICENSE file for the full text of the license.
+
