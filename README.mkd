@@ -16,7 +16,7 @@ So what is it, concretely?
 --------------------------
 
 Simply put, it allows you to select parts of a json structure using
-JSONPath. For example, if you want to find a user's real name on twitter  from
+[JSONPath](http://goessner.net/articles/JsonPath/). For example, if you want to find a user's real name on twitter  from
 this
 
     {"url":"http://www.riffraff.info","description":"Code Monkey, Professional Student, Geek","time_zone":"Rome","profile_sidebar_fill_color":"e0ff92","status":{"in_reply_to_user_id":null,"in_reply_to_status_id":null,"in_reply_to_screen_name":null,"created_at":"Sun Jan 24 16:16:28 +0000 2010","source":"<a href=\"http://www.tweetdeck.com/\" rel=\"nofollow\">TweetDeck</a>","truncated":false,"id":8153979023,"favorited":false,"text":"darn I have to publish a forked gem, and can't understand the state of the art in how to do so :("},"statuses_count":447,"created_at":"Tue Jan 02 11:27:37 +0000 2007","profile_sidebar_border_color":"87bc44","contributors_enabled":false,"favourites_count":3,"followers_count":142,"profile_image_url":"http://a3.twimg.com/profile_images/88180929/nyussi_normal.jpg","profile_text_color":"000000","lang":"en","geo_enabled":true,"notifications":null,"profile_background_image_url":"http://s.twimg.com/a/1264119427/images/themes/theme1/bg.png","friends_count":171,"protected":false,"screen_name":"riffraff","following":null,"profile_link_color":"0000ff","location":"milan/rome/budapest","name":"gabriele renzi","verified":false,"profile_background_tile":false,"id":446303,"utc_offset":3600,"profile_background_color":"9ae4e8"
@@ -70,7 +70,7 @@ ruby having the script in your path, or use `rake test` you shall see something 
 
     15 tests, 15 assertions, 0 failures, 0 errors
 
-If you don't please report it at http://github.com/riffraff/jeg/issues
+    If you don't please report it at [http://github.com/riffraff/jeg/issues](http://github.com/riffraff/jeg/issues)
 
 License
 -------

@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
      "VERSION",
      "bin/jeg",
      "jeg.gemspec",
+     "pkg/jeg-0.2.1.gem",
      "test/docs.rb"
   ]
   s.homepage = %q{http://github.com/riffraff/jeg}
