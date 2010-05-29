@@ -22,5 +22,9 @@ class T < Test::Unit::TestCase
       end
     end
   end
+  def test_pretty_print
+    out =%x' echo {} | jeg -p '
+    assert_equal out, "{\n}\n"
+  end
 end
 

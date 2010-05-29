@@ -104,6 +104,8 @@ class Jeg
         if arg.is_a?(Array) || arg.is_a?(Hash)
           puts arg.to_json
         else
+          # jeg:107:in `write': Broken pipe (Errno::EPIPE)
+          # XXX use proper puts method swalloeing 
           puts arg
         end
       end
@@ -113,9 +115,6 @@ class Jeg
 
       if options[:expression].nil?
         options[:expression] = mk_expr(ARGV.shift)
-      end
-      if options[:pretty_print]
-        require 'pp'
       end
       if options[:explain]
         puts "Using path '#{options[:expression]}'"
@@ -128,18 +127,19 @@ class Jeg
             puts json
           end
           if options[:pretty_print]
-            pp json
-          end
-          res = JSONPath.lookup(json, options[:expression])
-          case options[:format]
-          when :smart
-            print_smart(res)
-          when :json
-            puts res.to_json
-          when :ruby
-            p res
-          else 
-            abort("invalid format")
+            puts JSON.pretty_generate(json)
+          else
+            res = JSONPath.lookup(json, options[:expression])
+            case options[:format]
+            when :smart
+              print_smart(res)
+            when :json
+              puts res.to_json
+            when :ruby
+              p res
+            else 
+              abort("invalid format")
+            end
           end
 
         rescue JSON::ParserError=>e
