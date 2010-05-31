@@ -147,6 +147,8 @@ class Jeg
           STDERR.puts e.message
         end
       end
+     rescue Errno::EPIPE
+      #nop the next process such as head was finished
     end
   end
 end
