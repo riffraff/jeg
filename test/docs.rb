@@ -1,6 +1,8 @@
 require 'test/unit'
 require 'rubygems'
 require 'json'
+require 'open3'
+
 abort("jeg is not in path") if %x{jeg -h}.empty?
 
 class T < Test::Unit::TestCase
@@ -22,9 +24,34 @@ class T < Test::Unit::TestCase
       end
     end
   end
+
   def test_pretty_print
     out =%x' echo {} | jeg -p '
     assert_equal out, "{\n}\n"
+  end
+
+
+  def test_with_trailing_pipe
+    Open3.popen3('jeg -a key | head -n 1') do |stdin, stdout, stderr|
+      4.times do |i|
+        stdin.puts '{"key":"value"}'
+        stdin.flush
+      end
+      stdin.close
+      assert_equal "value\n", stdout.read
+      assert_equal "", stderr.read
+    end
+  end
+  def test_with_trailing_pipe_sudden_close
+    Open3.popen3('jeg -a key') do |stdin, stdout, stderr|
+      stdout.close
+      4.times do |i|
+        stdin.puts '{"key":"value"}'
+        stdin.flush
+      end
+      stdin.close
+      assert_equal "", stderr.read
+    end
   end
 end
 
