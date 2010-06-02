@@ -104,8 +104,6 @@ class Jeg
         if arg.is_a?(Array) || arg.is_a?(Hash)
           puts arg.to_json
         else
-          # jeg:107:in `write': Broken pipe (Errno::EPIPE)
-          # XXX use proper puts method swalloeing 
           puts arg
         end
       end
